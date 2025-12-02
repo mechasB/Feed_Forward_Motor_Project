@@ -2,7 +2,7 @@
 
 ![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Status](https://img.shields.io/badge/status-active-success)
-![Event](https://img.shields.io/badge/event-FSG_25-red)
+![Event](https://img.shields.io/badge/event-FSP_25-red)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## 📋 About the Project
