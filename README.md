@@ -1,4 +1,4 @@
-# 🏎️ FSG 25 - Power Prediction & Analysis
+# 🏎️ FSP 25 - Power Prediction & Analysis
 
 ![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Status](https://img.shields.io/badge/status-active-success)
@@ -18,21 +18,25 @@ We utilize **real telemetry data** collected from previous track runs and testin
 
 The project is developed by the Data Science / Electronics sub-team:
 
-| Name | Role | 
-| :--- | :--- | :--- |
-| **[Michał Błotniak]** | **Project Lead / | Embedded Developer PUT Motorsport
-| **[Jane Smith]** | **Project Lead**
+| Name | Role 
+| :--- | :--- 
+| **Michał Błotniak** | **Project Lead**<br>Embedded Developer @ PUT Motorsport|
+| **Mateusz Gogola** | **Data Scientist** | x |
 
 
 ## 🎯 Research Goals
 
-The primary objective is to model the power consumption function:
-$$P(t) = f(v(t), a_{long}(t), a_{lat}(t), \theta_{throttle}(t), ...)$$
+The primary objective of this project is to develop a machine learning model that achieves the **highest possible prediction accuracy** while maintaining **real-world feasibility** for deployment.
 
-Where the key variables are:
-* $v(t)$ – Vehicle Speed
-* $a(t)$ – Acceleration (Longitudinal & Lateral / G-Force)
-* $\theta(t)$ – Driver Inputs (Steering angle, Throttle position)
+We aim to solve the optimization problem of maximizing model performance while minimizing computational complexity, ensuring the solution can be potentially implemented on the vehicle's embedded hardware (ECU/VCU or Onboard Computer).
+
+Key objectives include:
+
+1.  **High-Fidelity Prediction:** Minimizing the error between predicted and actual power consumption ($P_{pred} \approx P_{real}$) to allow for precise Energy Management strategies.
+2.  **Realizability & Constraints:** Ensuring the model architecture is lightweight enough to run with low latency. We prioritize models that are:
+    * **Computationally Efficient:** Low inference time suitable for real-time or near real-time applications.
+    * **Memory Efficient:** Compatible with limited resources of embedded systems.
+3.  **Robustness:** The model must generalize well to unseen data (e.g., different tracks or changing weather conditions) without overfitting.
 
 ## 💾 Data Structure
 
@@ -48,8 +52,8 @@ The project requires Python 3.8+. To set up the environment:
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/YOUR-ORG/fsg25-power-models.git](https://github.com/YOUR-ORG/fsg25-power-models.git)
-    cd fsg25-power-models
+    git clone [https://github.com/YOUR-ORG/fsp25-power-models.git](https://github.com/YOUR-ORG/fsp25-power-models.git)
+    cd fsp25-power-models
     ```
 
 2.  **Install dependencies:**
