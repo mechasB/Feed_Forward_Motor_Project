@@ -1,0 +1,3 @@
+data/*
+!data/final_data.csv
+!data/.gitkeep
