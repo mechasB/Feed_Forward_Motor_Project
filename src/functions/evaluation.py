@@ -1,10 +1,20 @@
 # src/functions/evaluation.py
+import os
 import time
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error, median_absolute_error
+
+
+# Nazwa wspólnego pliku Excel z wynikami wszystkich modeli.
+# Plik powstaje w folderze projektu (obok notebooków), niezależnie od katalogu roboczego.
+RESULTS_XLSX_NAME = "model_results.xlsx"
+_PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # .../src
+RESULTS_XLSX_PATH = os.path.join(_PROJECT_DIR, RESULTS_XLSX_NAME)
 
 
 def _compute_metrics(model_name, y_true, y_pred, inference_time):
@@ -34,6 +44,75 @@ def _compute_metrics(model_name, y_true, y_pred, inference_time):
     }
 
 
+def save_results_to_excel(metrics, xlsx_path=None):
+    """
+    Zapisuje słownik metryk do wspólnego pliku Excel (jeden wiersz na model).
+
+    - Jeśli plik nie istnieje, tworzy go z nagłówkiem.
+    - Jeśli model o danej nazwie już jest w pliku, jego wiersz zostaje NADPISANY
+      najnowszym wynikiem (jeden wiersz = jeden model, zawsze aktualny).
+    - Dodaje kolumnę 'Zaktualizowano' ze znacznikiem czasu.
+
+    Parametry
+    ---------
+    metrics   : dict – słownik metryk (z klucza 'model' brana jest nazwa modelu)
+    xlsx_path : str  – ścieżka do pliku Excel (domyślnie RESULTS_XLSX_PATH w folderze projektu)
+
+    Zwraca
+    ------
+    str – ścieżka do zapisanego pliku
+    """
+    if xlsx_path is None:
+        xlsx_path = RESULTS_XLSX_PATH
+
+    # Kolejność kolumn w arkuszu
+    columns = ['model', 'R2', 'RMSE [W]', 'MAE [W]', 'MedAE [W]',
+               'MAPE [%]', 'ms/próbkę', 'Częst. [Hz]', 'Zaktualizowano']
+
+    new_row = dict(metrics)
+    new_row['Zaktualizowano'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    # Wczytaj istniejący plik (jeśli jest), w razie problemu zacznij od pustej tabeli
+    if os.path.exists(xlsx_path):
+        try:
+            df = pd.read_excel(xlsx_path)
+        except Exception as e:
+            print(f"  [Excel] Ostrzeżenie: nie udało się wczytać istniejącego pliku ({e}). Tworzę nowy.")
+            df = pd.DataFrame(columns=columns)
+    else:
+        df = pd.DataFrame(columns=columns)
+
+    # Upewnij się, że wszystkie kolumny istnieją
+    for col in columns:
+        if col not in df.columns:
+            df[col] = pd.NA
+
+    # Nadpisz wiersz danego modelu, jeśli już istnieje; w przeciwnym razie dopisz
+    model_name = new_row['model']
+    if 'model' in df.columns and (df['model'] == model_name).any():
+        idx = df.index[df['model'] == model_name][0]
+        for col in columns:
+            df.at[idx, col] = new_row.get(col, pd.NA)
+        action = "zaktualizowano"
+    else:
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        action = "dodano"
+
+    # Uporządkuj kolumny i zapisz
+    df = df[columns]
+
+    try:
+        df.to_excel(xlsx_path, index=False)
+        print(f"  [Excel] Wynik {action} → {xlsx_path}")
+    except PermissionError:
+        print(f"  [Excel] BŁĄD: plik '{xlsx_path}' jest otwarty w innym programie. "
+              f"Zamknij go w Excelu i uruchom komórkę ponownie.")
+    except Exception as e:
+        print(f"  [Excel] BŁĄD zapisu: {e}")
+
+    return xlsx_path
+
+
 def display_model_results(
     model_name,
     y_true,
@@ -45,6 +124,8 @@ def display_model_results(
     feature_importances=None,
     feature_names=None,
     subset_size=300,
+    save_to_excel=True,
+    excel_path=None,
 ):
     """
     Ujednolicone wyświetlanie wyników modelu.
@@ -64,6 +145,8 @@ def display_model_results(
     feature_importances: array – wartości ważności cech (opcjonalne)
     feature_names     : list  – nazwy cech (opcjonalne, wymagane gdy feature_importances != None)
     subset_size       : int   – liczba próbek w wykresie czasowym (domyślnie 300)
+    save_to_excel     : bool  – czy zapisać metryki do wspólnego pliku Excel (domyślnie True)
+    excel_path        : str   – ścieżka do pliku Excel (domyślnie folder projektu / model_results.xlsx)
 
     Zwraca
     ------
@@ -89,6 +172,11 @@ def display_model_results(
     print(f"  Czas/próbkę   : {metrics['ms/próbkę']:.4f} ms")
     print(f"  Częstotliwość : {metrics['Częst. [Hz]']:.1f} Hz")
     print(sep + "\n")
+
+    # --- ZAPIS DO EXCELA ---
+    if save_to_excel:
+        save_results_to_excel(metrics, xlsx_path=excel_path)
+        print()
 
     # --- UKŁAD WYKRESÓW ---
     has_history      = history is not None
